@@ -1,0 +1,13 @@
+
+# filename size
+tom.dat 20
+jerry.dat 20
+tweety.out 20
+quil.dat 20
+rat.dat 20
+bat.out 20
+mat.dat 20
+cat.dat 10
+that.out 1000
+elmerfudd.txt 987654321
+#

@@ -5,20 +5,25 @@ Created on Tue Oct 12 22:12:00 2021
 Motivation: LBNL Programming assessment received from Dr. Anubhav Jain
 @author: Manjunath Matam (manjunath.matam@ucf.edu, manjunath031@gmail.com)
 
-Objective: Take two files (files.txt and nodes.txt), process them, 
+Objective: Take two files (files.txt and nodes.txt) through command line, process them, 
           distribute the files to appropriate nodes, and produce an output file (result.txt). 
 
-Two input files adhere to a common rules unless otherwise mentioned, are: 
+Distribution principle adopted by the autor: The progam follows Min-Max (M2) algorithm approach to assign files 
+         to the nodes.
+
+Two input files adhere to the specifications mentioned in the document, are: 
     1. Blank lines or lines starting with # character can be ignored in the process. 
     2. The first column is a string, contains file/node name.
     3. The second column is an interger, shows the file size or node space in bytes. 
 
 Distribution rules (Files to nodes) specified in the document are:
-    1. 
+    1. A file that cannot be accommodated in any node is denoted as NULL.
 
-Additional rules (not directly specifed in the document) considered are: 
+Additional rules (not directly specifed in the document but) considered by the author are: 
     1. One node can accommodate two or more files.
     2. One file cannot be transferred to the multiple nodes. 
+    3. All the files with sizes greater than the maximum node are not stored; denoted as NULL.
+
 """
 
 #### Import few standard modules
@@ -30,6 +35,18 @@ import sys
 
 
 def convert_txt2df(ip):
+    """
+    Parameters
+    ----------
+    ip : .txt file
+        Contains two columns separated by white space and a few additional lines.
+    Returns
+    -------
+    df : dataframe
+        Contains the columns converted from the .txt file.
+    Error: Text message
+          Produces error when the .txt file contains non specified characters or additional spaces   
+    """
     df = []
     try:
         df = pd.read_csv('%s'%(ip), sep=" ", header=None)
@@ -42,6 +59,16 @@ def df_processing(df):
     """
     This function takes raw df as input and processes it, drops the lines 
     starting with '#', white spaces, and returns processed df. 
+
+    Parameters
+    ----------
+    df : dataframe
+        Contains un processed raw data.
+
+    Returns
+    -------
+    df : dataframe
+        Contains processed data after dropping blank or commented lines or rows with NaN values.
     """
     ### Special characters defined in the document
     spec_char = ["","#"]
@@ -58,8 +85,10 @@ def df_processing(df):
     df[df.columns[1]] = df[df.columns[1]].astype(int) 
     return df
 
+### Main program begins
 if __name__ == '__main__':
-    ### Directly import the files while working here for debugging
+    ### Incomment following lines for debuggins
+    ### Directly import the two input files
     # fdf = convert_txt2df('files.txt')
     # ndf = convert_txt2df('nodes.txt')
     ### command line interface codes for importing input files
@@ -76,23 +105,26 @@ if __name__ == '__main__':
     ### Print the namesapce object
     print(args)
     ### convert the input file to dataframe
-    print("\n ### Converting files.txt to dataframe \n")
+    print("####### STEP1/3: Convert .txt document to dataframe")
+    print("### Converting 'files.txt' to dataframe")
     fdf = convert_txt2df(args.ip_file)
-    print("\n ### Converting files.txt to dataframe \n")
+    print("### Converting 'nodes.txt' to dataframe \n")
     ndf = convert_txt2df(args.ip_node)
     ### process the dataframe and drop the uncessary columns, characters
-    print("\n Dropping blank lines, lines commented using (#) character ")    
+    print("####### STEP2/3: Process the dataframes")
+    print("### Dropping blank lines, lines commented using (#) character ")    
     fdf = df_processing(fdf)
     ndf = df_processing(ndf)
     ### Name the columns; it is easier to process the named columns
     fdf.columns = ['filename','size']
     ndf.columns = ['nodename','space']
-    print("\n ### Files-dataframe first 5 rows \n")
-    print(fdf.head(n=5))
-    print("\n ### Nodes-dataframe first 5 rows \n")
-    print(ndf.head(n=5))
+    # print("\n ### Files-dataframe first 5 rows \n")
+    # print(fdf.head(n=5))
+    # print("\n ### Nodes-dataframe first 5 rows \n")
+    # print(ndf.head(n=5))
     
     ### Process the files and nodes to produce the output file
+    print("\n ####### STEP3/3: Implement M2 distribution approach")
     ### compute total file size and node space 
     tfs = fdf['size'].sum(axis=0)
     tns = ndf['space'].sum(axis=0)
@@ -165,5 +197,5 @@ if __name__ == '__main__':
     else:
         print("Exiting with no output file. Reason: none of the nodes have enough space to accommodate any of the files.")
     
-    
+### End of the code    
    
