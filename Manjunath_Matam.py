@@ -8,8 +8,8 @@ Motivation: LBNL Programming assessment received from Dr. Anubhav Jain
 Objective: Take two files (files.txt and nodes.txt) through command line, process them, 
           distribute the files to appropriate nodes, and produce an output file (result.txt). 
 
-Distribution principle adopted by the autor: The progam follows Min-Max (M2) algorithm approach to assign files 
-         to the nodes.
+Distribution principle: The author has implemented the Min-Max distribution plan for 
+    balancing the data stored on the nodes, not balancing the space on the nodes. 
 
 Two input files adhere to the specifications mentioned in the document, are: 
     1. Blank lines or lines starting with # character can be ignored in the process. 
@@ -23,6 +23,7 @@ Additional rules (not directly specifed in the document but) considered by the a
     1. One node can accommodate two or more files.
     2. One file cannot be transferred to the multiple nodes. 
     3. All the files with sizes greater than the maximum node are not stored; denoted as NULL.
+    4. Duplicated entries will raise error.  
 
 """
 
@@ -82,19 +83,26 @@ def df_processing(df):
     df.reset_index(inplace=True,drop=True)
     ### convert columns to propoer format: first to string, second to integer 
     df[df.columns[0]] = df[df.columns[0]].astype('str') 
-    df[df.columns[1]] = df[df.columns[1]].astype(int) 
+    df[df.columns[1]] = df[df.columns[1]].astype(int)
+    ### Stop with error if there are duplicat entries in the names column
+    if df[df.columns[0]].duplicated().any():
+        print("############### Duplicates have been found in the dataframe, hence exiting.")    
+        sys.exit()
     return df
 
 ### Main program begins
 if __name__ == '__main__':
-    ### Incomment following lines for debuggins
-    ### Directly import the two input files
+    # ### Uncomment following lines for debuggins
+    # ### Directly import the two input files
     # fdf = convert_txt2df('files.txt')
     # ndf = convert_txt2df('nodes.txt')
-    ### command line interface codes for importing input files
-    parser = argparse.ArgumentParser(description='\
+
+    ## command line interface codes for importing input files
+    parser = argparse.ArgumentParser(usage='\### Description: The program takes two input files (files.txt, nodes.txt) and \
+                              produces an output file (result.txt) in three steps.',
+                              description='\
             ### Description: The program takes two input files (files.txt, nodes.txt) and \
-                             produces an output file (result.txt) in three steps')
+                              produces an output file (result.txt) in three steps.')
     parser.add_argument('-f',"-input-files",type=str,dest="ip_file",required=True,choices=['files.txt'],
                         help='Input the correct file named files.txt')
     parser.add_argument('-n',"-input-nodes",type=str,dest='ip_node',required=True,choices=['nodes.txt'],
@@ -102,18 +110,22 @@ if __name__ == '__main__':
     parser.add_argument('-o', type =str, default ='result.txt',required=False,dest='op_result',
                         help = 'Provide a name to the output file (Default: result.txt)')
     args = parser.parse_args()
-    ### Print the namesapce object
+    ## Print the namesapce object
     print(args)
-    ### convert the input file to dataframe
-    print("####### STEP1/3: Convert .txt document to dataframe")
-    print("### Converting 'files.txt' to dataframe")
+    ## convert the input file to dataframe
+    print('\n######################################################')
+    print("####### STEP1/3: Converting .txt document to dataframe:")
+    print("############### Converting 'files.txt' to dataframe.")
     fdf = convert_txt2df(args.ip_file)
-    print("### Converting 'nodes.txt' to dataframe \n")
+    print("############### Converting 'nodes.txt' to dataframe.")
     ndf = convert_txt2df(args.ip_node)
+
     ### process the dataframe and drop the uncessary columns, characters
-    print("####### STEP2/3: Process the dataframes")
-    print("### Dropping blank lines, lines commented using (#) character ")    
+    print('\n######################################################')
+    print("####### STEP2/3: Processing the dataframes:")
+    print("############### Dropping blank lines, lines beginning with (#) character in files df.")    
     fdf = df_processing(fdf)
+    print("############### Dropping blank lines, lines beginning with (#) character in nodes df.")    
     ndf = df_processing(ndf)
     ### Name the columns; it is easier to process the named columns
     fdf.columns = ['filename','size']
@@ -124,16 +136,17 @@ if __name__ == '__main__':
     # print(ndf.head(n=5))
     
     ### Process the files and nodes to produce the output file
-    print("\n ####### STEP3/3: Implement M2 distribution approach")
+    print('\n######################################################')
+    print("####### STEP3/3: Implementing the Min-Max distribution plan for balancing the data stored on the nodes:")
     ### compute total file size and node space 
     tfs = fdf['size'].sum(axis=0)
     tns = ndf['space'].sum(axis=0)
     ### Compare the data size with respect to available memory in nodes 
     dif = tfs*100/tns
-    ### comparison
+    ### comparison whether all the data on files can/can't be stored on to the nodes
     comp = np.where(dif<=100,'can','cannot')
-    print("\n Compared to the available memory (100%%), the data size is %d %%."%(dif))
-    print("Hence, all the data %s be stored in the nodes. \n"%(comp))
+    print("############## Compared to the available memory on all nodes (100%%), data size on the files is %d %%."%(dif))
+    print("############## Hence, all the data %s be stored in the nodes."%(comp))
     ### Allocation principles:
     ### 1. When data size is bigger than available spce, start dropping the bigger data files and until the remaining all can be accommodated in the nodes
     ### 2. When data is smaller than available space, accommodate equal size data into all the nodes
@@ -154,6 +167,7 @@ if __name__ == '__main__':
         ### check if each node has enough space to accommodate the prescribed transfer limit
         ndf1 = ndf[ndf['space']>tmin]
         if len(ndf1)>0:
+            print('############## Oversized files or undersized nodes have been ignored.')
             ### calculate avg file size that can be transported to each node 
             tavg = int(fdf1['size'].sum(axis=0)/len(ndf1))
             
@@ -183,19 +197,32 @@ if __name__ == '__main__':
         
             ### save the result
             output = result[['filename','target_node']]
-            # result.to_csv('results.txt',header=False,index=False,sep=" ")    
             output.to_csv('%s'%(args.op_result),header=False,index=False, sep=" ")
-            ### cross check the file size accommodated to each node
+            print('\n######################################################')
+            print('############## Distribution plan has been generated and saved as %s in the same folder.'%(args.op_result))
+            ### cross check size of the file accommodated to each node and this is a correct distribution
             chk = result.groupby(by='target_node').sum()
             chk = pd.merge(chk,ndf.set_index('nodename'),how='left',left_index=True,right_index=True)
-            chk['Transferrable?'] = chk['size'] < chk['space']
+            chk.loc[:,'Transferrable?'] = chk['size'] < chk['space']
             chk.rename(inplace=True, columns={"size":"File Size",
                                               "space":"Node Space"})
-            print(chk.head())
+            ### Distribution accuracy: how many of allocated nodes actually have space to accommodate the data
+            ### True positives
+            tp = len(chk[(chk['Transferrable?']==True)&((chk['Node Space']!=np.nan))])
+            ### False positives
+            fp = len(chk[(chk['Transferrable?']==False)&((chk['Node Space']==np.nan))])
+            ### accuracy
+            disacc = tp*100/(tp+fp)
+            print("############## Also, the plan has been cross verified with %d%% accuracy."%(disacc))
+            # print(chk.head()
         else:
-            print("Exiting with no output file. Reason: none of the nodes have enough space to accommodate any of the files.")
+            print('\n######################################################')
+            print("############ Exiting with no output file. Reason: none of the nodes have enough space \
+                  to accommodate any of the files.")
     else:
-        print("Exiting with no output file. Reason: none of the nodes have enough space to accommodate any of the files.")
+        print('\n######################################################')
+        print("############ Exiting with no output file. Reason: none of the nodes have enough space \
+              to accommodate any of the files.")
     
 ### End of the code    
    
