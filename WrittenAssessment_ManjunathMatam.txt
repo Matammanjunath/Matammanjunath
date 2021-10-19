@@ -1,0 +1,21 @@
+My response to the three assessment questions: 
+
+1. I would assess my skill in Python programming language as medium to advanced. My Python skill is advanced from the perspective of processing raw files, generating master files, proposing technical (field-based) filtering techniques, performing statistical analysis, producing visualization plots, automated performance reports, etc. Besides, my Python skill is medium from the perspective of working on all the Machine Learning algorithms. Also, I have been programming in this language for the last three years. 
+
+2.  With more time, I would like to improve the program in two aspects: (a) working with improper input files, (b) poising a perfect distribution plan. Presently the program cannot distinguish the column entries if the file names or data are missing style or format. The second and main important part I can improve with time is the distribution plan. Currently, the program follows the Min-Max algorithm to distribute the files to the nodes. More details about the Min-Max algorithm are provided below. However, I believe a global distribution plan can be prepared if more information about the files and nodes is provided. For example, when each node has enough space to accommodate average data (all files data/total files), there could be many possible solutions (one distribution plan is one solution) and one global solution. Also, suppose that if node1 and node10 have the same space, it is unclear if allocating a perfectly matching file to node1 over node10 or vice-versa is beneficial. 
+
+3. For the future applicant, I would ask for (a) validating the distribution plan, (b) producing a global distribution plan. The former is more straightforward, wherein writing a code to evaluate the once distribution plan and outputting the accuracy is sufficient. Meaning, after allocating file(s) to nodes, the program would check if each node's space > data size and whether it is a correct distribution. If all the nodes satisfy this requirement, then the distribution plan is validated with 100% accuracy. For the second part, I would change the example files (files.txt, nodes.txt) given in the document. This should lead the applicant to discover many possible solutions and one global solution. However, the examples (files.txt, nodes.txt) given in the PDF document lead to limited solutions, and there is no scope for a global solution.  
+
+#####################
+Program description: 
+Objective: Take two files (files.txt and nodes.txt) through the command line, process them, distribute files to appropriate nodes, and produce an output file (result.txt). 
+
+Distribution principle: In the current program, the Min-Max (M2) algorithm is used to produce a distribution plan (solution) for balancing the data stored on the nodes, not the space on the nodes. The program initially identifies the eligible files and nodes for the transfer. For this purpose, it computes two parameters: minimum file size (Tmin) and maximum node space (Nmax). A file is designated eligible if its data size is < Nmax, and a node is selected if it’s space > Tmin. These two limits filter out the files and nodes not suitable for distribution. Now the M2 algorithm arranges the eligible files in descending order of their sizes. Let say the order of the files is file1, file2, ..file4, and there are two nodes node1 and node2.  The files will be grouped in two (because two nodes) say group1, group2. The file1 goes to group1, file2 to group2. Next two files order will be reversed: file4, file3. With this, file4 goes to group1, file3 to group2. Finally: group1 [file1, file4], group2 [file2, file3]. Here, the first group constitutes maximum and minimum size files, and this goes on. Hence, the name, Min-Max algorithm.  The first group is allocated to the node1, the group2 to the node2. In the end, the program checks if each node space > allocated file(s) size and produces the distribution accuracy.    
+
+Additional rules (not directly specified in the document but) considered by the author are: 
+    1. One node can accommodate two or more files.
+    2. One file cannot be transferred to multiple nodes. 
+    3. All the files with sizes greater than the maximum node cannot be stored, denoted as NULL.
+    4. Duplicated entries will raise an error.
+
+########################   
